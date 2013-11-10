@@ -187,7 +187,7 @@ def load_data(dataset):
             (test_set_x, test_set_y)]
     return rval
 
-def load_mat(path_train, path_test):
+def load_mat(path_train, path_test, num_samples=0):
     print '... loading data'
     
     print 'Original train file size: ', os.path.getsize(path_train)/1000, ' kB'
@@ -199,7 +199,7 @@ def load_mat(path_train, path_test):
     data_test = spio.loadmat(path_test)
     
     def flatten(X):
-        num_samples = len(X[0][0][0])
+        num_samples = len(X[0][0][0]) if num_samples == 00
         ret_X = [[0]*32*32*3 for i in xrange(0, num_samples)]
         idx = 0
         for row in X:
@@ -230,7 +230,6 @@ def load_mat(path_train, path_test):
     
     print "Reformatting Data"
 
-    """
     train_set_x = train_X_flatten[:num_train_real]
     valid_set_x = train_X_flatten[num_train_real:]
     test_set_x = test_X_flatten
@@ -244,6 +243,7 @@ def load_mat(path_train, path_test):
     train_set_y = [label[0] for label in data_train["y"][0:500]]
     valid_set_y = [label[0] for label in data_train["y"][500:1000]]
     test_set_y  = [label[0] for label in data_test["y"][0:500]]
+    """
     
     summerize_x("tr", train_set_x)
     summerize_x("vl", valid_set_x)
