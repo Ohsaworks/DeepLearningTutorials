@@ -46,6 +46,8 @@ import numpy
 import theano
 import theano.tensor as T
 
+import scipy.io as spio
+
 
 class LogisticRegression(object):
     """Multi-class Logistic Regression Class
@@ -176,30 +178,6 @@ def load_data(dataset):
     #the number of rows in the input. It should give the target
     #target to the example with the same index in the input.
 
-    def shared_dataset(data_xy, borrow=True):
-        """ Function that loads the dataset into shared variables
-
-        The reason we store our dataset in shared variables is to allow
-        Theano to copy it into the GPU memory (when code is run on GPU).
-        Since copying data into the GPU is slow, copying a minibatch everytime
-        is needed (the default behaviour if the data is not in a shared
-        variable) would lead to a large decrease in performance.
-        """
-        data_x, data_y = data_xy
-        shared_x = theano.shared(numpy.asarray(data_x,
-                                               dtype=theano.config.floatX),
-                                 borrow=borrow)
-        shared_y = theano.shared(numpy.asarray(data_y,
-                                               dtype=theano.config.floatX),
-                                 borrow=borrow)
-        # When storing data on the GPU it has to be stored as floats
-        # therefore we will store the labels as ``floatX`` as well
-        # (``shared_y`` does exactly that). But during our computations
-        # we need them as ints (we use labels as index, and if they are
-        # floats it doesn't make sense) therefore instead of returning
-        # ``shared_y`` we will have to cast it to int. This little hack
-        # lets ous get around this issue
-        return shared_x, T.cast(shared_y, 'int32')
 
     test_set_x, test_set_y = shared_dataset(test_set)
     valid_set_x, valid_set_y = shared_dataset(valid_set)
@@ -209,6 +187,92 @@ def load_data(dataset):
             (test_set_x, test_set_y)]
     return rval
 
+def load_mat(path_train, path_test):
+    print '... loading data'
+    
+    print 'Original train file size: ', os.path.getsize(path_train)/1000, ' kB'
+    print 'Original test file size: ', os.path.getsize(path_test)/1000, ' kB'
+    
+    print "Loading Train Data"
+    data_train = spio.loadmat(path_train)
+    print "Loading Test Data"
+    data_test = spio.loadmat(path_test)
+    
+    def flatten(X):
+        num_samples = len(X[0][0][0])
+        ret_X = [[0]*32*32*3 for i in xrange(0, num_samples)]
+        idx = 0
+        for row in X:
+            for cell in row:
+                for channel in cell:
+                    for i in xrange(0, num_samples):
+                        ret_X[i][idx] = channel[i]
+                    idx += 1;
+        return ret_X
+    
+    def summerize_x(label, x):
+        print label
+        print len(x)
+        print len(x[0])
+    
+    def summerize_y(label, y):
+        print label
+        print len(y)
+    
+    print "Flatting Train Data"
+    train_X_flatten = flatten(data_train["X"])
+    print "Flatting Test Data"
+    test_X_flatten = flatten(data_test["X"])
+    
+    num_train_real = len(train_X_flatten) * 4 / 5
+    print "num_train: ", len(train_X_flatten)
+    print "num_train_real: ", num_train_real
+    
+    print "Reformatting Data"
+    train_set_x = train_X_flatten[:num_train_real]
+    valid_set_x = train_X_flatten[num_train_real:]
+    test_set_x = test_X_flatten
+    
+    summerize_x("tr", train_set_x)
+    summerize_x("vl", valid_set_x)
+    summerize_x("ts", test_set_x)
+    
+    train_set_y = [label[0] for label in data_train["y"][:num_train_real]]
+    valid_set_y = [label[0] for label in data_train["y"][num_train_real:]]
+    test_set_y  = [label[0] for label in data_test["y"]]
+    
+    summerize_y("tr", train_set_y)
+    summerize_y("vl", valid_set_y)
+    summerize_y("ts", test_set_y)
+    
+    return [shared_dataset(train_set_x, train_set_y), \
+        shared_dataset(valid_set_x, valid_set_y), \
+        shared_dataset(test_set_x, test_set_y)]
+
+def shared_dataset(data_xy, borrow=True):
+    """ Function that loads the dataset into shared variables
+
+    The reason we store our dataset in shared variables is to allow
+    Theano to copy it into the GPU memory (when code is run on GPU).
+    Since copying data into the GPU is slow, copying a minibatch everytime
+    is needed (the default behaviour if the data is not in a shared
+    variable) would lead to a large decrease in performance.
+    """
+    data_x, data_y = data_xy
+    shared_x = theano.shared(numpy.asarray(data_x,
+                                           dtype=theano.config.floatX),
+                             borrow=borrow)
+    shared_y = theano.shared(numpy.asarray(data_y,
+                                           dtype=theano.config.floatX),
+                             borrow=borrow)
+    # When storing data on the GPU it has to be stored as floats
+    # therefore we will store the labels as ``floatX`` as well
+    # (``shared_y`` does exactly that). But during our computations
+    # we need them as ints (we use labels as index, and if they are
+    # floats it doesn't make sense) therefore instead of returning
+    # ``shared_y`` we will have to cast it to int. This little hack
+    # lets ous get around this issue
+    return shared_x, T.cast(shared_y, 'int32')
 
 def sgd_optimization_mnist(learning_rate=0.13, n_epochs=1000,
                            dataset='../data/mnist.pkl.gz',
