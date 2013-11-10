@@ -206,7 +206,7 @@ def load_mat(path_train, path_test):
             for cell in row:
                 for channel in cell:
                     for i in xrange(0, num_samples):
-                        ret_X[i][idx] = channel[i]
+                        ret_X[i][idx] = channel[i] * 1.00
                     idx += 1;
         return ret_X
     
@@ -229,18 +229,25 @@ def load_mat(path_train, path_test):
     print "num_train_real: ", num_train_real
     
     print "Reformatting Data"
+
+    """
     train_set_x = train_X_flatten[:num_train_real]
     valid_set_x = train_X_flatten[num_train_real:]
     test_set_x = test_X_flatten
+    train_set_y = [label[0] for label in data_train["y"][:num_train_real]]
+    valid_set_y = [label[0] for label in data_train["y"][num_train_real:]]
+    test_set_y  = [label[0] for label in data_test["y"]]
+    """
+    train_set_x = train_X_flatten[0:500]
+    valid_set_x = train_X_flatten[500:1000]
+    test_set_x = test_X_flatten[0:500]
+    train_set_y = [label[0] for label in data_train["y"][0:500]]
+    valid_set_y = [label[0] for label in data_train["y"][500:1000]]
+    test_set_y  = [label[0] for label in data_test["y"][0:500]]
     
     summerize_x("tr", train_set_x)
     summerize_x("vl", valid_set_x)
     summerize_x("ts", test_set_x)
-    
-    train_set_y = [label[0] for label in data_train["y"][:num_train_real]]
-    valid_set_y = [label[0] for label in data_train["y"][num_train_real:]]
-    test_set_y  = [label[0] for label in data_test["y"]]
-    
     summerize_y("tr", train_set_y)
     summerize_y("vl", valid_set_y)
     summerize_y("ts", test_set_y)

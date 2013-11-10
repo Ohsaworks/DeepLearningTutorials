@@ -188,21 +188,31 @@ class SdA(object):
         '''
 
         # index to a [mini]batch
+        print "A"
         index = T.lscalar('index')  # index to a minibatch
-        corruption_level = T.scalar('corruption')  # % of corruption to use
+        print "B"
+        corruption_level = T.scalar('corruption')  # % of corruption to se
+        print "C"
         learning_rate = T.scalar('lr')  # learning rate to use
         # number of batches
+        print "D"
         n_batches = train_set_x.get_value(borrow=True).shape[0] / batch_size
         # begining of a batch, given `index`
+        print "E"
         batch_begin = index * batch_size
         # ending of a batch given `index`
+        print "F"
         batch_end = batch_begin + batch_size
 
+        print "G"
         pretrain_fns = []
+        print "H"
         for dA in self.dA_layers:
+            print "I"
             # get the cost and the updates list
             cost, updates = dA.get_cost_updates(corruption_level,
                                                 learning_rate)
+            print "J"
             # compile the theano function
             fn = theano.function(inputs=[index,
                               theano.Param(corruption_level, default=0.2),
@@ -212,8 +222,10 @@ class SdA(object):
                                  givens={self.x: train_set_x[batch_begin:
                                                              batch_end]})
             # append `fn` to the list of functions
+            print "K"
             pretrain_fns.append(fn)
 
+        print "L"
         return pretrain_fns
 
     def build_finetune_functions(self, datasets, batch_size, learning_rate):
