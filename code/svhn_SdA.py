@@ -318,7 +318,7 @@ def test_SdA(finetune_lr=0.1, pretraining_epochs=15,
     
     #datasets = load_data(dataset)
     datasets = load_mat("/home/ubuntu/var/train_32x32.mat", \
-        "/home/ubuntu/var/test_32x32.mat")
+        "/home/ubuntu/var/test_32x32.mat", 1000)
 
     train_set_x, train_set_y = datasets[0]
     valid_set_x, valid_set_y = datasets[1]

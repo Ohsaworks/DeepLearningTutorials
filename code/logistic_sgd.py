@@ -187,7 +187,7 @@ def load_data(dataset):
             (test_set_x, test_set_y)]
     return rval
 
-def load_mat(path_train, path_test, num_samples=0):
+def load_mat(path_train, path_test, ub_samples=0):
     print '... loading data'
     
     print 'Original train file size: ', os.path.getsize(path_train)/1000, ' kB'
@@ -199,7 +199,9 @@ def load_mat(path_train, path_test, num_samples=0):
     data_test = spio.loadmat(path_test)
     
     def flatten(X):
-        num_samples = len(X[0][0][0]) if num_samples == 00
+	num_samples = len(X[0][0][0])
+        if ub_samples>0: num_samples = min(ub_samples, num_samples)
+        print "num_samples: ", num_samples
         ret_X = [[0]*32*32*3 for i in xrange(0, num_samples)]
         idx = 0
         for row in X:
