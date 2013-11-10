@@ -245,9 +245,9 @@ def load_mat(path_train, path_test):
     summerize_y("vl", valid_set_y)
     summerize_y("ts", test_set_y)
     
-    return [shared_dataset(train_set_x, train_set_y), \
-        shared_dataset(valid_set_x, valid_set_y), \
-        shared_dataset(test_set_x, test_set_y)]
+    return [shared_dataset((train_set_x, train_set_y)), \
+        shared_dataset((valid_set_x, valid_set_y)), \
+        shared_dataset((test_set_x, test_set_y))]
 
 def shared_dataset(data_xy, borrow=True):
     """ Function that loads the dataset into shared variables
