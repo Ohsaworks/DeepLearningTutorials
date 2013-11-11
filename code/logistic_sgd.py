@@ -187,7 +187,7 @@ def load_data(dataset):
             (test_set_x, test_set_y)]
     return rval
 
-def load_mat(path_train, path_test, ub_samples=0):
+def load_mat(path_train, path_test, ub_samples=1000):
     print '... loading data'
     
     print 'Original train file size: ', os.path.getsize(path_train)/1000, ' kB'
@@ -208,7 +208,7 @@ def load_mat(path_train, path_test, ub_samples=0):
             for cell in row:
                 for channel in cell:
                     for i in xrange(0, num_samples):
-                        ret_X[i][idx] = channel[i] * 1.00
+                        ret_X[i][idx] = channel[i] * 1.00 / 255
                     idx += 1;
         return ret_X
     
