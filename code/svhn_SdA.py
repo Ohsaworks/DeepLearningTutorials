@@ -318,7 +318,7 @@ def test_SdA(finetune_lr=0.1, pretraining_epochs=15,
     
     #datasets = load_data(dataset)
     datasets = load_mat("/home/ubuntu/var/train_32x32.mat", \
-        "/home/ubuntu/var/test_32x32.mat", 20000)
+        "/home/ubuntu/var/test_32x32.mat", 5000)
 
     train_set_x, train_set_y = datasets[0]
     valid_set_x, valid_set_y = datasets[1]
@@ -333,7 +333,8 @@ def test_SdA(finetune_lr=0.1, pretraining_epochs=15,
     print '... building the model'
     # construct the stacked denoising autoencoder class
     sda = SdA(numpy_rng=numpy_rng, n_ins=96 * 32,
-              hidden_layers_sizes=[1000, 1000, 1000],
+              #hidden_layers_sizes=[1000, 1000, 1000],
+              hidden_layers_sizes=[500],
               n_outs=10)
 
     #########################
@@ -346,7 +347,7 @@ def test_SdA(finetune_lr=0.1, pretraining_epochs=15,
     print '... pre-training the model'
     start_time = time.clock()
     ## Pre-train layer-wise
-    corruption_levels = [.1, .2, .3]
+    corruption_levels = [0.3]
     for i in xrange(sda.n_layers):
         # go through pretraining epochs
         for epoch in xrange(pretraining_epochs):

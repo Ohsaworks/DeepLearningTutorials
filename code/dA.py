@@ -258,7 +258,7 @@ def test_dA(learning_rate=0.1, training_epochs=15,
     #datasets = load_mat("/home/ubuntu/var/train_32x32.mat", \
     #    "/home/ubuntu/var/test_32x32.mat", 20000)
     datasets = load_mat("/home/ubuntu/var/train_32x32.mat", \
-        "/home/ubuntu/var/test_32x32.mat", 50)
+        "/home/ubuntu/var/test_32x32.mat", 5000)
     train_set_x, train_set_y = datasets[0]
 
     # compute number of minibatches for training, validation and testing
@@ -318,52 +318,67 @@ def test_dA(learning_rate=0.1, training_epochs=15,
                            tile_spacing=(1, 1)))
     image.save('filters_corruption_0.png')
     """
-    #####################################
-    # BUILDING THE MODEL CORRUPTION 30% #
-    #####################################
-    rng = numpy.random.RandomState(123)
-    theano_rng = RandomStreams(rng.randint(2 ** 30))
 
-    da = dA(numpy_rng=rng, theano_rng=theano_rng, input=x,
-            n_visible=96 * 32, n_hidden=500)
+    for rate in [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 99]:
+        print "Rate: %d" % (rate)
 
-    cost, updates = da.get_cost_updates(corruption_level=0.3,
-                                        learning_rate=learning_rate)
+        #####################################
+        # BUILDING THE MODEL CORRUPTION 30% #
+        #####################################
+        rng = numpy.random.RandomState(123)
+        theano_rng = RandomStreams(rng.randint(2 ** 30))
+    
+        da = dA(numpy_rng=rng, theano_rng=theano_rng, input=x,
+                n_visible=96 * 32, n_hidden=100)
+    
+        cost, updates = da.get_cost_updates(corruption_level=rate*1.0/100,
+                                            learning_rate=learning_rate)
+    
+        train_da = theano.function([index], cost, updates=updates,
+             givens={x: train_set_x[index * batch_size:
+                                      (index + 1) * batch_size]})
+    
+        start_time = time.clock()
+    
+        ############
+        # TRAINING #
+        ############
+    
+        # go through training epochs
+        for epoch in xrange(training_epochs):
+            # go through trainng set
+            c = []
+            for batch_index in xrange(n_train_batches):
+                c.append(train_da(batch_index))
+    
+            print 'Training epoch %d, cost ' % epoch, numpy.mean(c)
+    
+        end_time = time.clock()
+    
+        training_time = (end_time - start_time)
+    
+        print >> sys.stderr, ('The % corruption code for file ' +
+                              os.path.split(__file__)[1] +
+                              ' ran for %.2fm' % (training_time / 60.))
+    
+        bits = tile_raster_images(
+            X=da.W.get_value(borrow=True).T,
+            img_shape=(32, 96), tile_shape=(10, 10),
+            tile_spacing=(3, 3))
+        ri = PIL.Image.fromarray(numpy.array([[bits[j][i*3] for i in xrange(0,32*10+9)] for j in xrange(0,32*10+27)]))
+        bi = PIL.Image.fromarray(numpy.array([[bits[j][i*3+1] for i in xrange(0,32*10+9)] for j in xrange(0,32*10+27)]))
+        gi = PIL.Image.fromarray(numpy.array([[bits[j][i*3+2] for i in xrange(0,32*10+9)] for j in xrange(0,32*10+27)]))
+    
+        """
+        image = PIL.Image.fromarray(tile_raster_images(
+            X=da.W.get_value(borrow=True).T,
+            img_shape=(32, 96), tile_shape=(10, 10),
+            tile_spacing=(1, 1)))
+        """
+        image = PIL.Image.merge("RGB", (ri,gi,bi))
+        image.save('filters_corruption.color.%d.png' % (rate))
 
-    train_da = theano.function([index], cost, updates=updates,
-         givens={x: train_set_x[index * batch_size:
-                                  (index + 1) * batch_size]})
-
-    start_time = time.clock()
-
-    ############
-    # TRAINING #
-    ############
-
-    # go through training epochs
-    for epoch in xrange(training_epochs):
-        # go through trainng set
-        c = []
-        for batch_index in xrange(n_train_batches):
-            c.append(train_da(batch_index))
-
-        print 'Training epoch %d, cost ' % epoch, numpy.mean(c)
-
-    end_time = time.clock()
-
-    training_time = (end_time - start_time)
-
-    print >> sys.stderr, ('The 30% corruption code for file ' +
-                          os.path.split(__file__)[1] +
-                          ' ran for %.2fm' % (training_time / 60.))
-
-    image = PIL.Image.fromarray(tile_raster_images(
-        X=da.W.get_value(borrow=True).T,
-        img_shape=(32, 96), tile_shape=(10, 10),
-        tile_spacing=(1, 1)), "RGB")
-    image.save('filters_corruption_30.png')
-
-    #os.chdir('../')
+    """
 
     #####################################
     # BUILDING THE MODEL CORRUPTION 30% #
@@ -405,11 +420,16 @@ def test_dA(learning_rate=0.1, training_epochs=15,
                           os.path.split(__file__)[1] +
                           ' ran for %.2fm' % (training_time / 60.))
 
-    image = PIL.Image.fromarray(tile_raster_images(
+    bits = tile_raster_images(
         X=da.W.get_value(borrow=True).T,
         img_shape=(32, 96), tile_shape=(10, 10),
-        tile_spacing=(1, 1)), "RGB")
-    image.save('filters_corruption_50.png')
+        tile_spacing=(3, 3))
+    ri = PIL.Image.fromarray(numpy.array([[bits[j][i*3] for i in xrange(0,32*10+9)] for j in xrange(0,32*10+27)]))
+    bi = PIL.Image.fromarray(numpy.array([[bits[j][i*3+1] for i in xrange(0,32*10+9)] for j in xrange(0,32*10+27)]))
+    gi = PIL.Image.fromarray(numpy.array([[bits[j][i*3+2] for i in xrange(0,32*10+9)] for j in xrange(0,32*10+27)]))
+    image = PIL.Image.merge("RGB", (ri,gi,bi))
+    image.save('filters_corruption_50.color.png')
+    """
 
     os.chdir('../')
 
